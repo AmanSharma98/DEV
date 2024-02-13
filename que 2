@@ -1,0 +1,55 @@
+const http = require('http');
+const fs = require('fs');
+const url = require('url');
+
+const server = http.createServer((req, res) => {
+ if (req.url === '/') {
+  handleRequest('products.json', null, res);
+ } else {
+  const query = url.parse(req.url, true).query;
+  if (query.category) {
+   handleRequest('products.json', query.category, res);
+  } else {
+   notFound(res);
+  }
+ }
+});
+
+function handleRequest(filename, category, res) {
+ fs.readFile(filename, 'utf8', (err, data) => {
+  if (err) {
+   internalServerError(res);
+  } else {
+   if (category) {
+    const products = JSON.parse(data);
+    const filteredProducts = products.filter(product => product.Category === category);
+    sendJSON(res, filteredProducts);
+   } else {
+    sendJSON(res, data);
+   }
+  }
+ });
+}
+
+function internalServerError(res) {
+ res.writeHead(500, { 'Content-Type': 'text/plain' });
+ res.end('Internal Server Error');
+}
+
+function notFound(res) {
+ res.writeHead(404, { 'Content-Type': 'text/plain' });
+ res.end('Not Found');
+}
+
+function sendJSON(res, data) {
+ res.writeHead(200, { 'Content-Type': 'application/json' });
+ res.end(JSON.stringify(data));
+}
+
+server.listen(3001, () => {
+ console.log('Server started...');
+});
+
+server.on('error', (error) => {
+ console.error('Unable to start server', error);
+});
