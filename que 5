@@ -1,0 +1,63 @@
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const server = http.createServer((req, res) => {
+ const { method, url } = req;
+
+ if (method === 'GET') {
+  if (url === '/') {
+   // Handle requests for the home endpoint
+   const homePagePath = path.join(__dirname, 'home.html');
+   fs.readFile(homePagePath, 'utf8', (err, data) => {
+    if (err) {
+     res.writeHead(500, { 'Content-Type': 'text/plain' });
+     res.end('Internal Server Error');
+    } else {
+     res.writeHead(200, { 'Content-Type': 'text/html' });
+     res.end(data);
+    }
+   });
+  } else if (url === '/style.css') {
+   // Handle requests for the style.css file
+   const styleFilePath = path.join(__dirname, 'style.css');
+   fs.readFile(styleFilePath, 'utf8', (err, data) => {
+    if (err) {
+     res.writeHead(500, { 'Content-Type': 'text/plain' });
+     res.end('Internal Server Error');
+    } else {
+     res.writeHead(200, { 'Content-Type': 'text/css' });
+     res.end(data);
+    }
+   });
+  } else if (url === '/task.jpg') {
+   // Handle requests for the task.jpg image
+   const imageFilePath = path.join(__dirname, 'task.jpg');
+   fs.readFile(imageFilePath, (err, data) => {
+    if (err) {
+     res.writeHead(500, { 'Content-Type': 'text/plain' });
+     res.end('Internal Server Error');
+    } else {
+     res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+     res.end(data);
+    }
+   });
+  } else {
+   // Handle requests for all other files
+   res.writeHead(404, { 'Content-Type': 'text/plain' });
+   res.end('Not Found');
+  }
+ } else {
+  // Handle non-GET requests
+  res.writeHead(405, { 'Content-Type': 'text/plain' });
+  res.end('Method Not Allowed');
+ }
+});
+
+server.listen(3001, () => {
+ console.log('Server started...');
+});
+
+server.on('error', (error) => {
+ console.error('Unable to start server', error);
+});
