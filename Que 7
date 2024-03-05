@@ -1,0 +1,28 @@
+const express = require('express');
+const fs = require('fs');
+const app = express();
+app.use(express.json());
+
+app.get('/', (req, res) => {
+ const todoData = fs.readFileSync('todo.json');
+ const todoList = JSON.parse(todoData);
+ res.json(todoList);
+});
+
+app.get('/delete', (req, res) => {
+ const id = req.query.id;
+ const todoData = fs.readFileSync('todo.json');
+ let todoList = JSON.parse(todoData);
+ todoList = todoList.filter(task => task.id !== id && task.status === 'pending');
+ fs.writeFileSync('todo.json', JSON.stringify(todoList, null, 2));
+ res.json(todoList);
+});
+
+const PORT = 3001;
+app.listen(PORT, (err) => {
+ if (err) {
+  console.log('Unable to start server');
+ } else {
+  console.log(`Server started on port ${PORT}`);
+ }
+});
