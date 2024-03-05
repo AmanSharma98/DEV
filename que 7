@@ -1,0 +1,23 @@
+const express = require('express');
+const fs = require('fs');
+const app = express();
+app.use(express.json());
+
+app.post('/addtask', (req, res) => {
+ const todoData = fs.readFileSync('todo.json');
+ const todoList = JSON.parse(todoData);
+ const newTask = { title: req.body.title, id: req.body.id, status: req.body.status };
+ todoList.push(newTask);
+ fs.writeFileSync('todo.json', JSON.stringify(todoList, null, 2));
+ res.send('Task added successfully');
+});
+
+app.get('/tasks', (req, res) => {
+ const status = req.query.status;
+ const todoData = fs.readFileSync('todo.json');
+ const todoList = JSON.parse(todoData);
+ const filteredTasks = todoList.filter(task => task.status === status);
+ res.json(filteredTasks);
+});
+
+app.listen(3000, () => console.log('Server started on port 3000'));
