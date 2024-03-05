@@ -1,0 +1,52 @@
+const http = require('http');
+const fs = require('fs');
+const url = require('url');
+let invalidRequestCount = 0;
+
+const server = http.createServer((req, res) => {
+ const parsedUrl = url.parse(req.url, true);
+ const pathname = parsedUrl.pathname;
+
+ if (req.method === 'GET' && pathname === '/signup') {
+  invalidRequestCount++;
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(`<h1>Invalid request method - ${invalidRequestCount}</h1>`);
+ } else if (req.method === 'POST' && pathname === '/signup') {
+  let body = '';
+  req.on('data', chunk => {
+   body += chunk.toString();
+  });
+  req.on('end', () => {
+   const userData = JSON.parse(body);
+   fs.readFile('users.txt', 'utf8', (err, data) => {
+    if (err) {
+     res.writeHead(500, { 'Content-Type': 'text/plain' });
+     res.end('Internal Server Error');
+    } else {
+     const users = JSON.parse(data);
+     users.push(userData);
+     fs.writeFile('users.txt', JSON.stringify(users), 'utf8', err => {
+      if (err) {
+       res.writeHead(500, { 'Content-Type': 'text/plain' });
+       res.end('Internal Server Error');
+      } else {
+       res.writeHead(200, { 'Content-Type': 'text/plain' });
+       res.end('User data stored successfully');
+      }
+     });
+    }
+   });
+  });
+ } else {
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.end('Not Found');
+ }
+});
+
+server.listen(3001, () => {
+ console.log('Server started...');
+});
+
+server.on('error', (error) => {
+ console.error('Unable to start server', error);
+});
