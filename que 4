@@ -1,0 +1,52 @@
+const http = require('http');
+const fs = require('fs');
+const url = require('url');
+const path = require('path');
+
+const server = http.createServer((req, res) => {
+ const parsedUrl = url.parse(req.url, true);
+ const pathname = parsedUrl.pathname;
+
+ if (pathname === '/about' || pathname === '/home') {
+  // Handle /about and /home requests
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(`<h1>Welcome to ${pathname}</h1>`);
+ } else {
+  // Handle all other requests
+  const logEntry = `${new Date().toISOString()} - Requested URL: ${req.url}\n`;
+  const logFilePath = path.join(__dirname, 'errors.log');
+
+  fs.appendFile(logFilePath, logEntry, 'utf8', (err) => {
+   if (err) {
+    console.error('Error writing to log file:', err);
+   }
+  });
+
+  fs.readFile(logFilePath, 'utf8', (err, data) => {
+   if (err) {
+    console.error('Error reading log file:', err);
+   } else {
+    const logEntries = data.trim().split('\n');
+    if (logEntries.length > 5) {
+     const newLog = logEntries.slice(logEntries.length - 5).join('\n');
+     fs.writeFile(logFilePath, newLog, 'utf8', (err) => {
+      if (err) {
+       console.error('Error truncating log file:', err);
+      }
+     });
+    }
+   }
+  });
+
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.end('Not Found');
+ }
+});
+
+server.listen(3000, () => {
+ console.log('Server started...');
+});
+
+server.on('error', (error) => {
+ console.error('Unable to start server', error);
+});
